@@ -105,10 +105,39 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    // Launch the reduction CUDA Kernel
     printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
    	bool turn = true;
 
+	// Allocate CUDA events that we'll use for timing
+	cudaEvent_t start;
+	err = cudaEventCreate(&start);
+
+	if (err != cudaSuccess)
+	{
+		fprintf(stderr, "Failed to create start event (error code %s)!\n", cudaGetErrorString(err));
+		exit(EXIT_FAILURE);
+	}
+
+	cudaEvent_t stop;
+	err = cudaEventCreate(&stop);
+
+	if (err != cudaSuccess)
+	{
+		fprintf(stderr, "Failed to create stop event (error code %s)!\n", cudaGetErrorString(err));
+		exit(EXIT_FAILURE);
+	}
+
+	// Record the start event
+	err = cudaEventRecord(start, NULL);
+
+	if (err != cudaSuccess)
+	{
+		fprintf(stderr, "Failed to record start event (error code %s)!\n", cudaGetErrorString(err));
+		exit(EXIT_FAILURE);
+	}
+
+	
+	// Launch the reduction CUDA Kernel
 	while (true){
 
 		if (turn){
@@ -136,12 +165,44 @@ int main(void)
 
 	}
 	
+	// Record the stop event
+	err = cudaEventRecord(stop, NULL);
+
+	if (err != cudaSuccess)
+	{
+		fprintf(stderr, "Failed to record stop event (error code %s)!\n", cudaGetErrorString(err));
+		exit(EXIT_FAILURE);
+	}
+
+	// Wait for the stop event to complete
+	err = cudaEventSynchronize(stop);
+
+	if (err != cudaSuccess)
+	{
+		fprintf(stderr, "Failed to synchronize on the stop event (error code %s)!\n", cudaGetErrorString(err));
+		exit(EXIT_FAILURE);
+	}
+
+	float msecTotal = 0.0f;
+	err = cudaEventElapsedTime(&msecTotal, start, stop);
+
+	if (err != cudaSuccess)
+	{
+		fprintf(stderr, "Failed to get time elapsed between events (error code %s)!\n", cudaGetErrorString(err));
+		exit(EXIT_FAILURE);
+	}
+
+
+
+	// Sychronize threads ?
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) {
 		fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching kernel!\n", err);
 		exit(EXIT_FAILURE);
 	}
 
+
+	// Copy results from device to host
 	if (turn)
 		err = cudaMemcpy(&h_output, &d_input[0], sizeof(int), cudaMemcpyDeviceToHost);
 	else
@@ -162,7 +223,7 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
-    printf("Test PASSED\n");
+    printf("Test PASSED\nTime: %f", msecTotal);
 
     // Free device global memory
     err = cudaFree(d_input);
