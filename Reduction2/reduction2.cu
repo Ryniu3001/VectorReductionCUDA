@@ -16,9 +16,9 @@
  Sa konfikty ?
 
  */
-__global__ void reduction(int *i_data, int *o_data, int numElements)
+__global__ void reduction(float *i_data, float *o_data, int numElements)
 {
-	extern __shared__ int sdata[];
+	extern __shared__ float sdata[];
 	// Kazdy watek laduje jeden element z pamieci globalnej to pamieci wspoldzielonej
 	unsigned int thId = threadIdx.x;							//ID w obrebie bloku ?
     unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;		//globalne id watku ??
@@ -47,19 +47,19 @@ int main(void)
 	cudaError_t err = cudaSuccess;
 
 	int numElements = 50000;
-	size_t size = numElements * sizeof(int);
+	size_t size = numElements * sizeof(float);
 	printf("[Vector reduction of %d elements]\n", numElements);
 
 	//Determine amount of blocks and threads per block
 	int threadsPerBlock = 256;
 	int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
-	size_t o_size = blocksPerGrid * sizeof(int);
+	size_t o_size = blocksPerGrid * sizeof(float);
 
 	// Allocate the host vectors
-	int *h_input = (int *)malloc(size);
+	float *h_input = (float *)malloc(size);
 
-	int h_output = 0;
+	float h_output = 0;
 
 	if (h_input == NULL)
 	{
@@ -68,7 +68,7 @@ int main(void)
 	}
 
 	// Initialize the host vector
-	int checkSum = 0;
+	float checkSum = 0.0;
 	for (int i = 0; i < numElements; ++i)
 	{
 		h_input[i] = 1;
@@ -76,7 +76,7 @@ int main(void)
 	}
 
 	// Allocate the device input vector
-	int *d_input = NULL;
+	float *d_input = NULL;
 	err = cudaMalloc((void **)&d_input, size);
 
 	if (err != cudaSuccess)
@@ -86,7 +86,7 @@ int main(void)
 	}
 
 	// Allocate the device output vector
-	int *d_output = NULL;
+	float *d_output = NULL;
 	err = cudaMalloc((void **)&d_output, o_size);
 
 	if (err != cudaSuccess)
@@ -203,9 +203,9 @@ int main(void)
 
 	// Copy results from device to host
 	if (turn)
-		err = cudaMemcpy(&h_output, &d_input[0], sizeof(int), cudaMemcpyDeviceToHost);
+		err = cudaMemcpy(&h_output, &d_input[0], sizeof(float), cudaMemcpyDeviceToHost);
 	else
-		err = cudaMemcpy(&h_output, &d_output[0], sizeof(int), cudaMemcpyDeviceToHost);
+		err = cudaMemcpy(&h_output, &d_output[0], sizeof(float), cudaMemcpyDeviceToHost);
 
 	if (err != cudaSuccess)
 	{
