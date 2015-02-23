@@ -47,12 +47,12 @@ int main(void)
 {
     cudaError_t err = cudaSuccess;
 
-    int numElements = 50000;
+    int numElements = 25000000;
     size_t size = numElements * sizeof(float);
     printf("[Vector reduction of %d elements]\n", numElements);
 
 	//Determine amount of blocks and threads per block
-	int threadsPerBlock = 256;
+	int threadsPerBlock = 512;
 	int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
 	size_t o_size = blocksPerGrid * sizeof(float);
@@ -69,10 +69,10 @@ int main(void)
     }
 
     // Initialize the host vector
-	float checkSum = 0.0;
-    for (int i = 0; i < numElements; ++i)
+	double checkSum = 0.0;
+    for (int i = 0; i < numElements; i++)
     {
-        h_input[i] = 1;
+        h_input[i] = 1.0f;
 		checkSum += h_input[i];
     }
 
@@ -219,11 +219,11 @@ int main(void)
 
 	if (h_output != checkSum)
 	{
-		fprintf(stderr, "Result verification failed! host result: %d !=  device result: %d\n",checkSum, h_output);
+		fprintf(stderr, "Result verification failed! host result: %f !=  device result: %f\n",checkSum, h_output);
 		exit(EXIT_FAILURE);
 	}
 
-    printf("Test PASSED\nTime: %f", msecTotal);
+    printf("Test PASSED\nhost: %f  Device: %f\nTime: %f", checkSum, h_output,msecTotal);
 
     // Free device global memory
     err = cudaFree(d_input);
@@ -253,7 +253,7 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    printf("Done\n");
+    printf("\nDone\n");
     return 0;
 }
 

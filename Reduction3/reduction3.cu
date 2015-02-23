@@ -42,12 +42,12 @@ int main(void)
 {
 	cudaError_t err = cudaSuccess;
 
-	int numElements = 50000;
+	int numElements = 75000000;
 	size_t size = numElements * sizeof(float);
 	printf("[Vector reduction of %d elements]\n", numElements);
 
 	//Determine amount of blocks and threads per block
-	int threadsPerBlock = 256;
+	int threadsPerBlock = 512;
 	int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
 	size_t o_size = blocksPerGrid * sizeof(float);
@@ -64,7 +64,7 @@ int main(void)
 	}
 
 	// Initialize the host vector
-	float checkSum = 0.0;
+	double checkSum = 0.0;
 	for (int i = 0; i < numElements; ++i)
 	{
 		h_input[i] = 1;
@@ -218,7 +218,7 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
-	printf("Test PASSED\nTime: %f", msecTotal);
+	printf("Test PASSED\nTime: %f\n", msecTotal);
 
 	// Free device global memory
 	err = cudaFree(d_input);
